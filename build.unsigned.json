@@ -1,0 +1,11 @@
+{
+  "electron": {
+    "windows": {
+      "package": [
+        "portable",
+        "nsis"
+      ],
+      "forceCodeSigning": false
+    }
+  }
+}

@@ -11,6 +11,112 @@ Text-to-speach (TTS) support is provided via [`phonegap-plugin-speech-synthesis`
 1. Android
 1. Electron - Windows
 
+## Packaging a local Cboard fork
+
+Use the repository's cross-platform packaging command instead of editing the
+Cboard source by hand:
+
+```bash
+npm run cboard:package
+```
+
+The command prefers the official `./cboard` submodule and falls back to a
+sibling `../cboard` checkout. It builds Cboard with `PUBLIC_URL=.`, copies
+the output into `www`, injects `cordova.js` into the packaged copy, and
+verifies that no root-absolute asset paths remain.
+
+To select another checkout or reuse an existing build:
+
+```bash
+npm run cboard:package -- --source ../cboard
+npm run cboard:package:skip-build
+npm run cboard:package:verify
+```
+
+This packaging step does not build a native binary. Continue with the existing
+Cordova Android, iOS, or Electron commands after the web package is verified.
+The rationale and validation evidence are recorded in
+`docs/tuyujia-cboard-mobile-shell-decision.zh-CN.md`.
+
+For a local unsigned Windows package, keep the release signing configuration
+untouched and select the dedicated build configuration instead:
+
+```powershell
+$env:CSC_IDENTITY_AUTO_DISCOVERY='false'
+$buildConfig = (Resolve-Path .\build.unsigned.json).Path
+npx --yes cordova@12.0.0 build electron --release --buildConfig="$buildConfig"
+```
+
+This command only generates local verification artifacts. Official releases
+must continue to use `build.json` with the project's signing certificate.
+The absolute path is intentional: `cordova-electron@3.1.0` loads a relative
+`--buildConfig` value as a Node module name.
+
+### Local on-device speech recognition
+
+The PicInterpreter fork keeps its modernized MIT-licensed Cordova speech
+plugin in the sibling `../cboard-speech-recognition` checkout. Install it
+before adding or regenerating Android/iOS platforms:
+
+```powershell
+npx --yes cordova@12.0.0 plugin add ..\cboard-speech-recognition --nosave
+```
+
+The plugin adds no speech model. Android 12+ and iOS 13+ use the operating
+system's on-device recognizer only when that device and language report it as
+available; otherwise the local mode fails explicitly. `--nosave` intentionally
+keeps this fork-only local integration out of the official dependency lock.
+Re-run the command after cleaning generated Cordova platforms.
+
+### Android 14 native build verification
+
+This fork declares `cordova-android@14.0.1`. Follow the official Cordova
+requirements and install Android SDK Platform 35, Build Tools 35.0.0, and a
+supported JDK before rebuilding the generated platform. Recreate the platform
+instead of carrying an older `platforms/android` directory forward:
+
+```powershell
+cordova platform remove android --nosave
+cordova platform add android@14.0.1 --noresources --nosave
+cordova plugin add ..\cboard-speech-recognition --nosave
+```
+
+The complete Cboard Android build also requires the real
+`google-services.json` deployment file in the project root because the
+existing `cordova-plugin-firebasex` build applies the Google Services Gradle
+plugin. Do not generate a placeholder or commit that file. A missing file
+blocks the full app build but does not invalidate the independent native
+compile gate for the speech-recognition plugin; see the Chinese decision
+record for the exact evidence and remaining device test boundary.
+
+### Firebase-free Android core debug package
+
+For local AAC and on-device speech verification without release Firebase
+credentials, use the isolated core-debug builder:
+
+```powershell
+$env:ANDROID_HOME='C:\path\to\Android\Sdk'
+$env:CORDOVA_JAVA_HOME='C:\path\to\jdk'
+$env:CORDOVA_CLI='C:\path\to\cordova\bin\cordova'
+npm run android:core:debug
+```
+
+The command first rebuilds the current Cboard fork, then creates a temporary
+Cordova project. Only the optional `cordova-plugin-firebasex` entry is removed
+from that temporary package manifest; the local
+`../cboard-speech-recognition` plugin and the remaining official ccboard
+plugins are retained. The source `package.json`, lockfile, `config.xml`,
+`settings.json`, `build.json`, generated platforms, and release Firebase
+configuration are not modified.
+
+The verified APK and machine-readable report are written to the ignored
+`artifacts/android-core` directory. Use `--skip-web-build` only when the
+existing `ccboard/www` package has already been verified and intentionally
+reused. This package is for local core-function validation only: Google
+Firebase analytics, messaging, and native Google authentication are absent,
+and it is not a release artifact. Official builds still require the real
+`google-services.json`, signing configuration, and deployment validation.
+
 ## Before setup
 
 You will need to modify the next files:

@@ -5,7 +5,11 @@
   "description": "AAC communication board with text-to-speech.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test scripts/*.test.mjs",
+    "cboard:package": "node scripts/package-cboard.mjs",
+    "cboard:package:skip-build": "node scripts/package-cboard.mjs --skip-build",
+    "cboard:package:verify": "node scripts/package-cboard.mjs --verify-only",
+    "android:core:debug": "node scripts/build-android-core.mjs"
   },
   "author": "Unicef",
   "license": "Apache-2.0",
