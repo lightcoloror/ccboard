@@ -104,6 +104,9 @@
         <config-file target="*-Info.plist" parent="ManualInitAudioDevice">
             <string>TRUE</string>
         </config-file>
+        <edit-config target="NSMicrophoneUsageDescription" file="*-Info.plist" mode="merge">
+            <string>Cboard uses the microphone to record a personal voice for communication tiles.</string>
+        </edit-config>
     </platform>
     <platform name="electron">
         <icon src="\www\images\artwork\logo_1x.png" target="app" />

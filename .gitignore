@@ -83,5 +83,8 @@ typings/
 # Google Service files
 google-services.json
 
+# Reproducible local verification artifacts
+/artifacts
+
 # Keystores
 *.keystore
